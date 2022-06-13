@@ -1,6 +1,6 @@
 # rand-utf8 Makefile
 
-.PHONY: all publish test tools tool_rust tool_fmt tool_readme
+.PHONY: all publish test static tools tool_rust tool_fmt tool_readme
 
 SHELL = /usr/bin/env sh
 
@@ -12,13 +12,15 @@ publish: tools
 	VER="v$$(grep version Cargo.toml | head -1 | cut -d ' ' -f 3 | cut -d \" -f 2)"; git tag -a $$VER -m $$VER
 	git push --tags
 
-test: tools
+static: tools
 	cargo fmt -- --check
 	cargo clippy
-	RUST_BACKTRACE=1 cargo build --all-features --all-targets
-	RUST_BACKTRACE=1 cargo test --all-features
 	cargo readme -o README.md
 	@if [ "${CI}x" != "x" ]; then git diff --exit-code; fi
+
+test: static tools
+	RUST_BACKTRACE=1 cargo build --all-features --all-targets
+	RUST_BACKTRACE=1 cargo test --all-features
 
 tools: tool_rust tool_fmt tool_clippy tool_readme
 

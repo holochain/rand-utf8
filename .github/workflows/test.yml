@@ -1,11 +1,8 @@
 name: Test
+
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  pull_request: {}
+
 jobs:
   test:
     name: Test
@@ -22,26 +19,35 @@ jobs:
         ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.toolchain }}
 
-      - name: Cargo Build
+      - name: Cargo Install Readme
         uses: actions-rs/cargo@v1
-        env:
-          RUST_BACKTRACE: 1
         with:
-          command: build
-          args: --all-features --all-targets
+          command: install
+          args: cargo-readme
 
-      - name: Cargo Test
-        uses: actions-rs/cargo@v1
-        env:
-          RUST_BACKTRACE: 1
-          RUST_LOG: DEBUG
+      - name: Make Static
+        run: make static
+
+      - name: Test
+        run: make test
+
+      - name: Release build
+        run: cargo build --release --all-features --all-targets
+
+  ci_pass:
+    if: ${{ always() }}
+    runs-on: "ubuntu-latest"
+    needs:
+      - test
+    steps:
+      - name: check status
+        uses: re-actors/alls-green@release/v1
         with:
-          command: test
-          args: --all-features
+          jobs: ${{ toJSON(needs) }}

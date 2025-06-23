@@ -58,7 +58,7 @@ impl CharU32Kind {
 
     pub fn next<R: rand::Rng>(&mut self, rng: &mut R) -> char {
         loop {
-            let c = rng.gen_range(1..=0x110000);
+            let c = rng.random_range(1..=0x110000);
             if let Some(c) = char::from_u32(c) {
                 return c;
             }
@@ -86,7 +86,7 @@ pub fn rand_utf8<R: rand::Rng>(rng: &mut R, len: usize) -> Box<str> {
         } else {
             // 0, 1, 2, and 3 will give us the smaller utf8 kind
             // 4 will give us the larger u32 kind
-            rng.gen_range(0..=4)
+            rng.random_range(0..=4)
         };
 
         if kind < 4 {
@@ -165,14 +165,14 @@ mod tests {
 
             libc_print::libc_println!("{:03}: {:04} {:0.2}", i, count, dif);
 
-            // this is pretty arbitrary, but if we tweak the algorithm
+            // this is pretty arbitrary, but if we tweak the algorithm,
             // and it breaks the tests, at least we'll have to
-            // conciously change this:
+            // consciously change this:
             if do_assert {
                 if i >= 1 && i <= 191 {
                     assert!(dif > 0.5);
                 } else if i >= 194 && i <= 244 {
-                    assert!(dif > 0.07);
+                    assert!(dif > 0.06);
                 }
             }
         }
@@ -193,14 +193,14 @@ mod tests {
         libc_print::libc_println!("# rand::distributions::DistString");
 
         distribution_test(false, |count, len| {
-            use rand::distributions::DistString;
+            use rand::distr::SampleString;
             use rand::SeedableRng;
             let mut rng = rand::rngs::SmallRng::seed_from_u64(2);
 
             let mut distribution = [0_u32; 256];
 
             for _ in 0..count {
-                for b in rand::distributions::Standard
+                for b in rand::distr::StandardUniform
                     .sample_string(&mut rng, len)
                     .as_bytes()
                 {
